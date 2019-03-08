@@ -1,0 +1,8 @@
+{C:/Users/Bruno/Desktop/CPEN 311/Lab 4/Simulations/initialize_array_tb.sv} {1 {vlog -work work -sv -stats=none {C:/Users/Bruno/Desktop/CPEN 311/Lab 4/Simulations/initialize_array_tb.sv}
+Model Technology ModelSim ALTERA vlog 10.3c Compiler 2014.09 Sep 20 2014
+-- Compiling module initialize_array_tb
+
+Top level modules:
+	initialize_array_tb
+
+} {} {}}

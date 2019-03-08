@@ -1,0 +1,21 @@
+module ksa(CLOCK_50, KEY, SW, LEDR, HEX0, HEX1, HEX2, HEX3, HEX4, HEX5);
+input logic CLOCK_50;
+input logic [3:0] KEY;
+input logic [9:0] SW;
+
+output logic [9:0] LEDR;
+output logic [6:0] HEX0, HEX1, HEX2, HEX3, HEX4, HEX5;
+
+logic clk, reset_n;
+logic [3:0] nIn;
+logic [6:0] ssOut;
+
+assign clk = CLOCK_50;
+assign reset_n = KEY[3];
+
+SevenSegmentDisplayDecoder YOOOOO(.ssOut(ssOut), .nIn(nIn));
+
+// Modular approach for Task 1 (initializing the array)
+initialize_array THE_ONE_TRUE_ARRAY_INITIALIZER(.s_register(s), .clk(clk);
+
+endmodule 
