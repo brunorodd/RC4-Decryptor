@@ -1,8 +1,9 @@
-module initialize_array(clk, address, write_enable, data);
+module initialize_array(clk, address, write_enable, data, remain);
 input logic clk;
 output logic [7:0] data;
 output logic [7:0] address;
 output logic write_enable;
+output logic remain;
 // this will be an 8-bit number that is used to implement the algorithm for task 1
 logic [7:0] i = 8'b0;
 
@@ -33,7 +34,7 @@ always_ff @ (posedge done)
 begin
 	remain = 1'b1;
 end	
-
+// writes to the memory sequentially 
 always_ff @ (posedge clk)
 begin
 	case (state)
@@ -56,6 +57,7 @@ begin
 	endcase
 end
 
+// i++
 always_ff @ (posedge clk)
 begin
 	if (increase)
