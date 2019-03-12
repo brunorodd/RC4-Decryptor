@@ -30,6 +30,10 @@ assign data_access	= 1'b1 & done_initialization;
 assign write_access  = 1'b1 & done_initialization;
 
 assign address = address_access ? code_address : initializing_address;
+
+always_comb begin
+  case(data)
+end
 assign data = data_access ? code_data : initializing_data;
 assign write_enable = write_access ? code_wren : initializing_wren;
 
@@ -62,15 +66,19 @@ FSM_controller THE_ONE_TRUE_FSM(.clk(clk),
 logic [7:0] address_d, address_m, data_d, q_m, q_d;
 logic wren_d;
 logic done_task2a, done_task2b;		
-									  
+logic data_s;								  
 FSM_controller2 THE_ONE_TRUE_FSM2(.clk(clk),
 											 .q_m(q_m),
 											 .address_d(address_d),
 											 .address_m(address_m),
-											 .wren(wren_d),
-											 .data(data_d),
+											 .wren_d(wren_d),
+											 .data_d(data_d),
 											 .done_task2a(done_task2a),
-											 .done_task2b(done_task2b));																
+											 .done_task2b(done_task2b),
+											 .address_s(code_address),
+											 .data_s(code_data),
+											 .wren_s(code_wren),
+											 .q_s(q));																
 // initializing the S, D (Decrypted), E (Encrypted) memory and filling in with numbers
 s_memory S(.clock(clk), // s[i] array
 			  .address(address), // feed address and clk to get q back
