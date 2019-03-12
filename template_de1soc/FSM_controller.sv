@@ -1,11 +1,14 @@
 // this is the main fsm that will be used to execute the second block of code
-module FSM_controller(clk, q, wren, data, address, secret_key, s_filled);
+module FSM_controller(clk, q, wren, data, address, secret_key, s_filled, done_task2a);
 input logic clk;
 input logic [7:0] q;
 input logic [23:0] secret_key;
 input logic s_filled;
 output logic wren; // write_enable
 output logic [7:0] data, address;
+output logic done_task2a; 
+
+assign done_task2a = done;
 
 logic [23:0] secret_key_stored;
 
@@ -58,6 +61,7 @@ assign i_mod_key   = i % keylength;
 
 assign address     = (choose_address)? j : i;
 assign data 		 = (choose_data) ? sj : si;
+assign done_task2a = done;
 
 /*-------------------------------------------------------------------------------*\
 -------------------------------Beginning of Task 2---------------------------------

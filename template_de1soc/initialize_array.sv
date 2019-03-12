@@ -1,9 +1,9 @@
-module initialize_array(clk, address, write_enable, data, remain);
+module initialize_array(clk, address, write_enable, data, done_init);
 input logic clk;
 output logic [7:0] data;
-output logic [7:0] address;
+output logic [7:0] address; //i
 output logic write_enable;
-output logic remain;
+output logic done_init;
 // this will be an 8-bit number that is used to implement the algorithm for task 1
 logic [7:0] i = 8'b0;
 
@@ -15,10 +15,9 @@ logic [7:0] i = 8'b0;
 logic increase, write_s, done;
 logic [2:0] state;
 
-logic remain = 1'b0;
-
 assign address = i; 
 assign data = address;
+assign done_init = done;
 
 parameter [2:0] idle = 3'b000;
 parameter [2:0] write = 3'b001;
@@ -30,27 +29,20 @@ assign write_enable = state[0];
 assign done = state[2];
 
 
-always_ff @ (posedge done)
-begin
-	remain = 1'b1;
-end	
 // writes to the memory sequentially 
 always_ff @ (posedge clk)
 begin
 	case (state)
-		idle: if (remain)
-					state <= idle;
-				else
-					state <= write;
+		idle:	 state <= write;
 		
 		write: state <= increment;
 		
-		increment: if (i < 256)
+		increment: if (i < 255)
 							state <= idle;
 					  else 
 							state <= end_init;
 						
-		end_init: state <= idle;
+		end_init: state <= end_init; //acts as another idle but with done = 1 and keeps returning back to it
 
 		default: state <= idle;
 							

@@ -1,0 +1,145 @@
+// this is the main fsm that will be used to execute the second block of code
+module FSM_controller(clk, q, wren, data, address, secret_key, s_filled);
+input logic clk;
+input logic [7:0] q;
+input logic [23:0] secret_key;
+input logic s_filled;
+output logic wren; // write_enable
+output logic [7:0] data, address;
+
+
+logic [1:0] keylength = 2'd3;
+logic [7:0] si, sj; // stores the array values of s[i] and s[j]
+logic [7:0] temporary_array; 
+
+// j = 0
+logic [7:0] j; // will be used to store j when the j = j +s[i] + secret_key[i % keylength] is used 
+logic [7:0] i;
+logic [7:0] i_mod_key;
+logic done;
+
+logic [13:0] state; // first state for the FSM // to resolve multiple drivers
+logic increase_i_counter, set_j, choose_data, swap, store_si_enable, store_sj_enable;
+
+
+// Modular approach for Task 1 (initializing the array)
+
+// states
+parameter [13:0] idle    			 = 14'b00_0000_0000_0000;
+parameter [13:0] get_si 			 = 14'b00_0000_0000_0001; // choose_reg has i set first as the address and will get the q bus on the second output
+parameter [13:0] store_si		    = 14'b00_0000_0010_0010; // this sets the enable for si to high so we can store the output of the q bus into si in this module on the next clock
+parameter [13:0] store_j 			 = 14'b00_0000_1000_0100; // this makes it so that we can store j as j = j +s[i] + secret_key[i_mod_key] on the next clock
+parameter [13:0] get_sj				 = 14'b00_0010_0000_0101; // choose_reg has j set now as the current address to retrieve the output q at address j
+parameter [13:0] store_sj			 = 14'b00_0010_0100_0111; // this sets the enable for sj to high to store the current output of the q bus into sj on the next clock cycle
+// important states to write to memory // 
+parameter [13:0] write_to_mem_si	 = 14'b01_0010_0000_1001; // wren = 1, choose_data = 0 (data = si), choose_address = 1 (address = j)
+parameter [13:0] wait_for_mem_si	 = 14'b00_0010_0000_1010;
+parameter [13:0] write_to_mem_sj  = 14'b01_0100_0000_1011; // wren = 1, choose_data = 1 (data = sj), choose_address = 0 (address = 1)
+parameter [13:0] wait_for_mem_sj  = 14'b00_0100_0000_1100;
+parameter [13:0] increment_i 		 = 14'b00_0001_0000_1101;
+parameter [13:0] end_task2a 		 = 14'b00_1000_0000_1110;
+
+// assigning state outputs
+assign swap 							 = state[4];
+assign store_si_enable				 = state[5];
+assign store_sj_enable				 = state[6];
+assign set_j 							 = state[7];
+assign increase_i_counter 			 = state[8];
+assign choose_address  				 = state[9]; // chooses which address (either i or j)
+assign choose_data 					 = state[10];
+assign done 							 = state[11];
+assign wren 							 = state[12];
+
+assign i_mod_key   = i % keylength; 
+
+assign address     = (choose_address)? j : i;
+assign data 		 = (choose_data) ? sj : si;
+
+/*-------------------------------------------------------------------------------*\
+-------------------------------Beginning of Task 2---------------------------------
+\*-------------------------------------------------------------------------------*/
+
+
+// j =0
+// for i = 0 to 255 {
+//	j = j + s[i] + secret_key[i % keylength]
+// swap s[i] and s[j]  }
+// resets i to 0 when s array is done being filled so it can be used in the next loop
+
+//==========================================================================================\\
+// NOTE: THIS FSM WILL NOT RUN UNTIL THE S_MEMORY IS DONE FILLING IN HENCE THE IF STATEMENT \\
+//==========================================================================================\\
+
+always_ff @ (posedge clk)
+begin
+// this state machine will not run until the S memory is filled
+	if (s_filled == 1) 
+		begin 
+			case (state)
+			
+		 	      idle:	state <= get_si;	
+				  
+				 get_si: state <= store_si;
+					
+		     store_si: state <= store_j; // this state will wait around two clock cycles to get si from the memory
+				
+				store_j: state <= get_sj; 
+							
+				 get_sj: state <= store_sj; // after this state, j will be loaded with j = j +s[i]+secret_key[i mod keylength] and sent to the S RAM
+				
+			  store_sj: state <= write_to_mem_si; // after this state, sj will be loaded from the q output of the S RAM
+			
+	// these states do the 'swapping'		
+	 write_to_mem_si: state <= wait_for_mem_si; 
+	 
+	 wait_for_mem_si: state <= write_to_mem_sj;
+	 
+	 write_to_mem_sj: state <= wait_for_mem_sj;
+	 
+	 wait_for_mem_sj: state <= increment_i;
+	 
+		  increment_i: if (i < 256)
+								state <= idle;
+							else
+								state <= end_task2a;
+								
+			end_task2a: state <= end_task2a;
+			
+				default: state <= idle;
+				
+			endcase
+		end
+end
+
+// initializes i to zero for this loop (only executes once)
+
+// for i = 0 to 255
+always_ff @ (posedge clk)
+begin
+	if (increase_i_counter)
+		i = i + 1;
+end
+
+// j = j + s[i] + secret_key[i % keylength]
+always_ff @ (posedge clk)
+begin 
+	if (set_j)
+		j <= j + si + secret_key[i_mod_key];	
+end
+
+// setting si
+always_ff @ (posedge clk)
+begin 
+	if (store_si_enable)
+		si <= q;
+end
+
+// setting sj
+always_ff @ (posedge clk)
+begin 
+	if (store_sj_enable)
+		sj <= q;
+end	
+
+	
+endmodule
