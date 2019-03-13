@@ -7,8 +7,7 @@ input logic s_filled;
 output logic wren; // write_enable
 output logic [7:0] data, address;
 output logic done_task2a; 
-
-assign done_task2a = done;
+logic done;
 
 logic [23:0] secret_key_stored;
 
@@ -19,7 +18,7 @@ logic [7:0] si, sj; // stores the array values of s[i] and s[j]
 logic [7:0] j = 1'b0; // will be used to store j when the j = j +s[i] + secret_key[i % keylength] is used 
 logic [7:0] i = 1'b0;
 logic [7:0] i_mod_key;
-logic done;
+
 
 logic [14:0] state; // first state for the FSM // to resolve multiple drivers
 logic increase_i_counter, set_j, choose_data, swap, store_si_enable, store_sj_enable;
@@ -30,17 +29,17 @@ logic increase_i_counter, set_j, choose_data, swap, store_si_enable, store_sj_en
 // states
 parameter [14:0] idle    			 = 15'b00_0000_0000_00000;
 parameter [14:0] get_si 			 = 15'b00_0000_0000_00001; // choose_reg has i set first as the address and will get the q bus on the second output
-parameter [14:0] wait_si			= 15'b00_0000_0010_00010;
+parameter [14:0] wait_si			 = 15'b00_0000_0010_00010;
 parameter [14:0] store_si		    = 15'b00_0000_0010_00011; // this sets the enable for si to high so we can store the output of the q bus into si in this module on the next clock
 parameter [14:0] store_j 			 = 15'b00_0000_1000_00100; // this makes it so that we can store j as j = j +s[i] + secret_key[i_mod_key] on the next clock
 
 parameter [14:0] get_sj				 = 15'b00_0010_0000_00101; // choose_reg has j set now as the current address to retrieve the output q at address j
-parameter [14:0] wait_sj			= 15'b00_0010_0000_00110;
+parameter [14:0] wait_sj			 = 15'b00_0010_0000_00110;
 parameter [14:0] store_sj			 = 15'b00_0010_0100_00111; // this sets the enable for sj to high to store the current output of the q bus into sj on the next clock cycle
 // important states to write to memory // 
 parameter [14:0] write_to_mem_si	 = 15'b01_0010_0000_01000; // wren = 1, choose_data = 0 (data = si), choose_address = 1 (address = j)
 parameter [14:0] wait_for_mem_si	 = 15'b00_0010_0000_01010;
-parameter [14:0] wait_one_cycle		= 15'b00_0100_0000_00110;
+parameter [14:0] wait_one_cycle	 = 15'b00_0100_0000_00110;
 parameter [14:0] write_to_mem_sj  = 15'b01_0100_0000_01011; // wren = 1, choose_data = 1 (data = sj), choose_address = 0 (address = 1)
 parameter [14:0] wait_for_mem_sj  = 15'b00_0100_0000_01100;
 parameter [14:0] increment_i 		 = 15'b00_0001_0000_01101;
