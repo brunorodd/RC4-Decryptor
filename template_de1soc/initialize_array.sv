@@ -1,5 +1,7 @@
-module initialize_array(clk, address, write_enable, data, done_init);
+module initialize_array(clk, address, write_enable, data, done_init, reset_task, start);
 input logic clk;
+input logic start;
+input logic reset_task;
 output logic [7:0] data;
 output logic [7:0] address; //i
 output logic write_enable;
@@ -28,21 +30,24 @@ assign increase = state[1];
 assign write_enable = state[0];
 assign done = state[2];
 
-
 // writes to the memory sequentially 
 always_ff @ (posedge clk)
 begin
 	case (state)
-		idle:	 state <= write;
+		idle:	 
+			if (start)
+				state <= write;
+			else
+				state <= idle;
 		
 		write: state <= increment;
 		
 		increment: if (i < 255)
-							state <= idle;
+							state <= write;
 					  else 
 							state <= end_init;
 						
-		end_init: state <= end_init; //acts as another idle but with done = 1 and keeps returning back to it
+		end_init: state <= idle; //acts as another idle but with done = 1 and keeps returning back to it
 
 		default: state <= idle;
 							
@@ -54,6 +59,8 @@ always_ff @ (posedge clk)
 begin
 	if (increase)
 		i = i + 1;
+	if (reset_task)
+		i = 0;
 end
 
 endmodule

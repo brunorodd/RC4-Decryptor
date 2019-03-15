@@ -1,12 +1,14 @@
 // this is the main fsm that will be used to execute the second block of code
-module FSM_controller(clk, q, wren, data, address, secret_key, s_filled, done_task2a);
+module FSM_controller(clk, q, wren, data, address, secret_key, s_filled, done_task2a, reset_task, start);
 input logic clk;
+input logic start;
 input logic [7:0] q;
 input logic [23:0] secret_key;
 input logic s_filled;
 output logic wren; // write_enable
 output logic [7:0] data, address;
 output logic done_task2a; 
+input logic reset_task;
 logic done;
 
 logic [23:0] secret_key_stored;
@@ -79,12 +81,13 @@ assign done_task2a = done;
 
 always_ff @ (posedge clk) 
 begin
-// this state machine will not run until the S memory is filled
-	if (s_filled == 1) 
-		begin 
+// this state machine will not run until the S memory is filled 
+
 			case (state)
-			
-		 	      idle:	state <= get_si;	
+		 	      idle:	if (start)
+									state <= get_si;
+							else 
+									state <= idle;
 				  
 				 get_si:/* address <= i;
 						 wren <=1'b0;
@@ -135,16 +138,15 @@ begin
 						state <= increment_i;
 	 
 		  increment_i: if (i < 255)
-								state <= idle;
+								state <= get_si;
 							else
 								state <= end_task2a;
 								
-			end_task2a: state <= end_task2a;
+			end_task2a: state <= idle;
 			
 				default: state <= idle;
 				
 			endcase
-		end
 end
 
 // initializes i to zero for this loop (only executes once)
@@ -154,6 +156,8 @@ always_ff @ (posedge clk)
 begin
 	if (increase_i_counter)
 		i = i + 1;
+   if (reset_task)
+		i = 0;
 end
 
 // j = j + s[i] + secret_key[i % keylength]
@@ -161,6 +165,9 @@ always_ff @ (posedge clk)
 begin 
 	if (set_j)
 		j <= j + si + secret_key_stored;	
+	if (reset_task)
+		j <= 0; 
+	
 end
 
 // setting si
@@ -168,6 +175,8 @@ always_ff @ (posedge clk)
 begin 
 	if (store_si_enable)
 		si <= q;
+	if (reset_task)
+		si <= 0;
 end
 
 // setting sj
@@ -175,6 +184,8 @@ always_ff @ (posedge clk)
 begin 
 	if (store_sj_enable)
 		sj <= q;
+	if (reset_task)
+		sj <= 0;
 end	
 
 always_comb 
